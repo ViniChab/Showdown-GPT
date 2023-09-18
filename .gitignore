@@ -1,0 +1,4 @@
+node_modules/
+WWebJS/
+.wwebjs_auth
+app/artifacts/
