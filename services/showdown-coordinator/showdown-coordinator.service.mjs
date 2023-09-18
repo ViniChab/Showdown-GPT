@@ -1,8 +1,6 @@
 import { PuppeteerService } from "../puppeteer/pupeteer.service.mjs";
 import puppeteer from "puppeteer";
 
-// document.querySelector('button[data-testid=send-button]')
-
 export class ShowdownCoordinatorService {
   puppeteerService;
 
@@ -10,34 +8,45 @@ export class ShowdownCoordinatorService {
     this.puppeteerService = new PuppeteerService();
   }
 
-  async startService() {
+  async startService(isTeamBuilder) {
     console.log("### STARTING SHOWDOWN SERVICE");
 
     let browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: false,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--window-size=1920,1080",
+      ],
       ignoreHTTPSErrors: true,
+      defaultViewport: {
+        width: 1920,
+        height: 1080,
+      },
     });
-    let page = await browser.newPage();
 
+    const page = await browser.newPage();
     await page.goto("https://play.pokemonshowdown.com/");
+    await this.puppeteerService.restoreSession(page, "sessionData.json");
+    await page.reload();
 
-    const isLoggedIn = await page.evaluate(() => {
-      return !document.querySelector('button[name="login"]');
-    });
+    if (isTeamBuilder) {
+      console.log("### CLOSE THE BROWSER WHEN YOU'RE DONE");
+
+      browser.on("disconnected", async () => {
+        console.log("### SESSION STORED!");
+        await this.puppeteerService.saveSession(page, "sessionData.json");
+      });
+
+      return;
+    }
+
+    const isLoggedIn = await page.evaluate(
+      () => !document.querySelector('button[name="login"]')
+    );
 
     if (!isLoggedIn) {
-      await browser.close();
-
-      browser = await puppeteer.launch({
-        headless: false,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
-      page = await browser.newPage();
-      await page.goto("https://play.pokemonshowdown.com/");
-
-      await new Promise((resolve) => setTimeout(resolve, 60000));
-      return browser;
+      throw new Error("Not logged in, please run 'start:teambuilder'");
     }
 
     return browser;

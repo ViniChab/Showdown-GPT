@@ -11,21 +11,25 @@ const port = process?.env?.PORT || 5100;
 const app = express();
 
 app.listen(port, () => {
-  console.log(`### API RESTARTED ON PORT: ${port}`);
+  console.log(`### API STARTED ON PORT ${port}`);
   main();
 });
 
 async function main() {
-  const browserHandler = new BrowserHandler();
-  const puppeteerService = new PuppeteerService();
-  const showdownCoordinatorService = new ShowdownCoordinatorService();
+  const args = process.argv.slice(2);
+  const isTeamBuilder = args.includes("--teambuilder");
 
-  console.log("### WAITING FOR PUPPETEER");
-  await puppeteerService.waitForBrowser(browserHandler);
-  console.log("### PUPPETEER STARTED");
+  console.log("### ARGS", args);
+
+  console.log("### STARTING PUPPETEER");
+  await new PuppeteerService().waitForBrowser(new BrowserHandler());
+  await new ShowdownCoordinatorService().startService(isTeamBuilder);
+
+  if (isTeamBuilder) {
+    return;
+  }
 
   startChatGpt();
-  // await showdownCoordinatorService.startService();
 }
 
 async function startChatGpt() {

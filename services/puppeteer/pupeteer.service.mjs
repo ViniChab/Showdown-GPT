@@ -16,11 +16,50 @@ export class PuppeteerService {
     });
   }
 
-  async screenshot(page, fileName = "default-screenshot.png", path = "media") {
-    try {
-      fs.mkdirSync(path);
-    } catch (e) {}
+  async saveSession(page, filePath) {
+    const cookies = await page.cookies();
+    const cookiesString = JSON.stringify(cookies);
 
-    await page.screenshot({ path: `${path}/${fileName}` });
+    const sessionStorage = await page.evaluate(() => {
+      return JSON.stringify(window.sessionStorage);
+    });
+
+    const localStorage = await page.evaluate(() => {
+      return JSON.stringify(window.localStorage);
+    });
+
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        cookies: cookiesString,
+        sessionStorage,
+        localStorage,
+      })
+    );
+  }
+
+  async restoreSession(page, filePath) {
+    const sessionData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    const cookies = JSON.parse(sessionData.cookies);
+    await page.setCookie(...cookies);
+
+    await page.evaluate((sessionStorageData) => {
+      window.sessionStorage.clear();
+      const parsedData = JSON.parse(sessionStorageData);
+
+      for (let key in parsedData) {
+        window.sessionStorage.setItem(key, parsedData[key]);
+      }
+    }, sessionData.sessionStorage);
+
+    await page.evaluate((localStorageData) => {
+      window.localStorage.clear();
+      const parsedData = JSON.parse(localStorageData);
+
+      for (let key in parsedData) {
+        window.localStorage.setItem(key, parsedData[key]);
+      }
+    }, sessionData.localStorage);
   }
 }
