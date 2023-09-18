@@ -7,11 +7,12 @@ export class ShowdownCoordinatorService {
   puppeteerService;
 
   constructor() {
-    console.log("### STARTING SHOWDOWN SERVICE");
     this.puppeteerService = new PuppeteerService();
   }
 
   async startService() {
+    console.log("### STARTING SHOWDOWN SERVICE");
+
     let browser = await puppeteer.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],

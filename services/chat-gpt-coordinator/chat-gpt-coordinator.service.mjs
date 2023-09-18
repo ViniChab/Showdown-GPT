@@ -1,20 +1,25 @@
 import { ChatGPTUnofficialProxyAPI } from "chatgpt";
+import { oraPromise } from "ora";
 
 // document.querySelector('button[data-testid=send-button]')
 
 export class ChatGptCoordinatorService {
   puppeteerService;
 
-  constructor() {
-    console.log("### STARTING CHAT GPT SERVICE");
-  }
-
   async startService() {
+    console.log("### STARTING CHAT GPT SERVICE");
+
     const api = new ChatGPTUnofficialProxyAPI({
-      accessToken: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ik1UaEVOVUpHTkVNMVFURTRNMEZCTWpkQ05UZzVNRFUxUlRVd1FVSkRNRU13UmtGRVFrRXpSZyJ9.eyJodHRwczovL2FwaS5vcGVuYWkuY29tL3Byb2ZpbGUiOnsiZW1haWwiOiJjaGFidmluaUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0sImh0dHBzOi8vYXBpLm9wZW5haS5jb20vYXV0aCI6eyJ1c2VyX2lkIjoidXNlci0zZGd3Y2YxYmk2YjdMZnFEVmFTWWUyQVYifSwiaXNzIjoiaHR0cHM6Ly9hdXRoMC5vcGVuYWkuY29tLyIsInN1YiI6ImF1dGgwfDYzOGE1MTdjMWE0NWZkMWRhYWY3OWExMiIsImF1ZCI6WyJodHRwczovL2FwaS5vcGVuYWkuY29tL3YxIiwiaHR0cHM6Ly9vcGVuYWkub3BlbmFpLmF1dGgwYXBwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE2OTQ3OTk1MjEsImV4cCI6MTY5NjAwOTEyMSwiYXpwIjoiVGRKSWNiZTE2V29USHROOTVueXl3aDVFNHlPbzZJdEciLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIG1vZGVsLnJlYWQgbW9kZWwucmVxdWVzdCBvcmdhbml6YXRpb24ucmVhZCBvcmdhbml6YXRpb24ud3JpdGUgb2ZmbGluZV9hY2Nlc3MifQ.xLUIJhaocV5lzk-CZDAU_AoiSYgME0K0WO_oFgYIahnnXV3b0RW4go8-cfDealIT_fRghOakkQKZtSrWjcTA1S_w25HXDb4Jmu3X_Fzr2iHjd1w-GgkRAyhmR0oyqt4G5ZWvcM81WvJ_6RDOpeTYXSqIblQL80o6IkYz0abB6hrQMQvO2Elq5nmEjeTtMRkVB3vXdQAFwczcTeDwcruWUyGi26MPz98X6TIlKx0_vPdrPcn6AbrW0ztjQ-jfIaywXJWJ0Pe4iDRQuVkMLr3tH6kv8jzIke7ZCwTLJb37Ou42N9lU-okvp2w7MpZNeCK78yFF_Wbmygq6ZxWuGQF36w',
+      accessToken: process.env.CHAT_GPT_ACCESS_TOKEN,
+      apiReverseProxyUrl: "https://ai.fakeopen.com/api/conversation",
+      model: "gpt-4",
     });
 
-    const res = await api.sendMessage("Hello World!");
-    console.log(res.text);
+    const prompt = process.env.START_PROMPT;
+    console.log("### HERE");
+    const res = await oraPromise(api.sendMessage(prompt), { text: prompt });
+    console.log("### REPONSE:", res.text);
+
+    return res.text === "OK";
   }
 }
