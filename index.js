@@ -19,6 +19,7 @@ async function main() {
   const args = process.argv.slice(2);
   const isTeamBuilder = args.includes("--teambuilder");
   const isVersus = args.includes("--versus");
+  const isUnnoficial = args.includes("--unnoficial");
   const chatGptCoordinator = new ChatGptCoordinatorService();
 
   console.log("### ARGS", args);
@@ -27,7 +28,7 @@ async function main() {
   await new PuppeteerService().waitForBrowser(new BrowserHandler());
 
   if (!isTeamBuilder) {
-    await startChatGpt(chatGptCoordinator);
+    await startChatGpt(chatGptCoordinator, isUnnoficial);
   }
 
   await new ShowdownCoordinatorService().startService(
@@ -37,8 +38,8 @@ async function main() {
   );
 }
 
-async function startChatGpt(chatGptCoordinator) {
-  const hasStarted = await chatGptCoordinator.startService();
+async function startChatGpt(chatGptCoordinator, isUnnoficial) {
+  const hasStarted = await chatGptCoordinator.startService(isUnnoficial);
 
   if (!hasStarted) {
     throw new Error("Chat GPT service failed to start");

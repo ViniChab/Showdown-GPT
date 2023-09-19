@@ -1,4 +1,4 @@
-import { ChatGPTUnofficialProxyAPI } from "chatgpt";
+import { ChatGPTUnofficialProxyAPI, ChatGPTAPI } from "chatgpt";
 import { oraPromise } from "ora";
 
 export class ChatGptCoordinatorService {
@@ -7,12 +7,23 @@ export class ChatGptCoordinatorService {
   puppeteerService;
   api;
 
-  async startService() {
-    this.api = new ChatGPTUnofficialProxyAPI({
-      accessToken: process.env.CHAT_GPT_ACCESS_TOKEN,
-      apiReverseProxyUrl: "https://ai.fakeopen.com/api/conversation",
-      model: "gpt-4",
-    });
+  async startService(unnofical = false) {
+    if (unnofical) {
+      this.api = new ChatGPTUnofficialProxyAPI({
+        accessToken: process.env.CHAT_GPT_ACCESS_TOKEN,
+        apiReverseProxyUrl: "https://ai.fakeopen.com/api/conversation",
+        model: "gpt-4",
+      });
+    } else {
+      this.api = new ChatGPTAPI({
+        apiKey: process.env.OPENAI_API_KEY,
+        completionParams: {
+          model: "gpt-4",
+          temperature: 0.5,
+          top_p: 0.8,
+        },
+      });
+    }
 
     const prompt = process.env.START_PROMPT;
     const res = await oraPromise(this.api.sendMessage(prompt), {
@@ -33,10 +44,11 @@ export class ChatGptCoordinatorService {
         parentMessageId: this.parentMessageId,
       }),
       {
-        text: prompt,
+        text: "Waiting for response",
       }
     );
-    console.log("### REPONSE:", res.text);
+    this.parentMessageId = res.id;
+    console.log("### REPONSE:\n", res.text.trim());
 
     return res.text;
   }

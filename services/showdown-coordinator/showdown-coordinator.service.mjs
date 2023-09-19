@@ -8,7 +8,7 @@ export class ShowdownCoordinatorService {
 
   constructor() {
     this.puppeteerService = new PuppeteerService();
-    this.battleService = new BattleService();
+    this.battleService = new BattleService(this.puppeteerService);
   }
 
   async startService(isTeamBuilder, isVersus, chatGptCoordinator) {
@@ -19,12 +19,12 @@ export class ShowdownCoordinatorService {
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--window-size=1920,1080",
+        "--window-size=1366,768",
       ],
       ignoreHTTPSErrors: true,
       defaultViewport: {
-        width: 1920,
-        height: 1080,
+        width: 1366,
+        height: 768,
       },
     });
 
@@ -63,7 +63,10 @@ export class ShowdownCoordinatorService {
 
   async waitForBattle(page) {
     console.log("### WAITING FOR BATTLE");
-    await page.waitForSelector(".innerbattle", { timeout: 60000 });
+    await this.puppeteerService.waitForSelectorIndefinitely(
+      page,
+      ".innerbattle"
+    );
     return true;
   }
 }

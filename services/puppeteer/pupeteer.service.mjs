@@ -62,4 +62,30 @@ export class PuppeteerService {
       }
     }, sessionData.localStorage);
   }
+
+  async waitForXPathIndefinitely(page, xpath) {
+    let elementHandle = null;
+    const timeout = 60000;
+
+    while (!elementHandle) {
+      try {
+        elementHandle = await page.waitForXPath(xpath, { timeout });
+      } catch {}
+    }
+
+    return elementHandle;
+  }
+
+  async waitForSelectorIndefinitely(page, selector) {
+    let elementHandle = null;
+    const timeout = 60000;
+
+    while (!elementHandle) {
+      try {
+        elementHandle = await page.waitForSelector(selector, { timeout });
+      } catch {}
+    }
+
+    return elementHandle;
+  }
 }

@@ -5,8 +5,10 @@
     "node": true
   },
   "extends": "eslint:recommended",
+  "browser": true,
   "parserOptions": {
-    "ecmaVersion": "latest"
+    "ecmaVersion": "latest",
+    "sourceType": "module"
   },
   "rules": {}
 }

@@ -13,7 +13,7 @@
     "start": "nodemon index.js",
     "start:teambuilder": "nodemon index.js --teambuilder",
     "start:versus": "nodemon index.js --versus",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:versus:unnoficial": "nodemon index.js --versus --unnoficial"
   },
   "author": "Vinícius Chab",
   "license": "ISC",
@@ -21,6 +21,7 @@
   "dependencies": {
     "chatgpt": "^5.2.5",
     "dotenv": "^16.3.1",
+    "eslint": "^8.49.0",
     "express": "^4.18.2",
     "fetch": "^1.1.0",
     "fs": "^0.0.1-security",
