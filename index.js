@@ -18,25 +18,31 @@ app.listen(port, () => {
 async function main() {
   const args = process.argv.slice(2);
   const isTeamBuilder = args.includes("--teambuilder");
+  const isVersus = args.includes("--versus");
+  const chatGptCoordinator = new ChatGptCoordinatorService();
 
   console.log("### ARGS", args);
 
   console.log("### STARTING PUPPETEER");
   await new PuppeteerService().waitForBrowser(new BrowserHandler());
-  await new ShowdownCoordinatorService().startService(isTeamBuilder);
 
-  if (isTeamBuilder) {
-    return;
+  if (!isTeamBuilder) {
+    await startChatGpt(chatGptCoordinator);
   }
 
-  startChatGpt();
+  await new ShowdownCoordinatorService().startService(
+    isTeamBuilder,
+    isVersus,
+    chatGptCoordinator
+  );
 }
 
-async function startChatGpt() {
-  const chatGptCoordinator = new ChatGptCoordinatorService();
+async function startChatGpt(chatGptCoordinator) {
   const hasStarted = await chatGptCoordinator.startService();
 
   if (!hasStarted) {
     throw new Error("Chat GPT service failed to start");
   }
+
+  return true;
 }

@@ -12,6 +12,7 @@
   "scripts": {
     "start": "nodemon index.js",
     "start:teambuilder": "nodemon index.js --teambuilder",
+    "start:versus": "nodemon index.js --versus",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Vinícius Chab",
