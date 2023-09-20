@@ -23,10 +23,14 @@ export class BattleService {
   async selectLead(page) {
     this.currentLog = await this.getNewLog(page);
 
-    const res = await this.chatGptService.sendPrompt(
+    let res = await this.chatGptService.sendPrompt(
       `${process.env.LEAD_PROMPT}
       ${this.currentLog}`
     );
+
+    if (res.toLowerCase().includes("action:switch:")) {
+      res = res.split(":")[2];
+    }
 
     this.puppeteerService.clickOnXpathButton(page, res);
 
@@ -56,11 +60,14 @@ export class BattleService {
     const newLog = await this.getNewLog(page);
     let action = await this.chatGptService.sendPrompt(newLog);
     action = action.split("\n").slice(1).join("\n");
-    await this.doAction(page, action.toLowerCase());
+    await this.doAction(page, action);
   }
 
   async getNewLog(page) {
-    const newLog = await page.evaluate(() => document.querySelector(PageElements.battleLog).innerText);
+    const newLog = await page.evaluate(
+      (PageElements) => document.querySelector(PageElements.battleLog).innerText,
+      PageElements
+    );
 
     const log = newLog.replace(this.currentLog, "");
     this.currentLog = newLog;
@@ -69,12 +76,12 @@ export class BattleService {
   }
 
   async doAction(page, action) {
-    if (!action.includes("action:")) {
-      action = await this.retryAction(page);
+    if (!action.toLowerCase().includes("action:")) {
+      action = await this.retryAction();
     }
 
-    const isSwitch = action.includes("action:switch:");
-    const isMega = action.includes("action:mega");
+    const isSwitch = action.toLowerCase().includes("action:switch:");
+    const isMega = action.toLowerCase().includes("action:mega");
 
     if (isSwitch) {
       const newPokemon = action.split(":")[2];
@@ -83,7 +90,7 @@ export class BattleService {
     }
 
     if (isMega) {
-      await page.evaluate(() => document.querySelector(PageElements.megaEvolve).click());
+      await page.evaluate((PageElements) => document.querySelector(PageElements.megaEvolve).click(), PageElements);
     }
 
     const move = isMega ? action.split(":")[2] : action.split(":")[1];
@@ -94,7 +101,7 @@ export class BattleService {
     console.log("\n### INVALID ACTION, RETRYING");
     let action = await this.chatGptService.sendPrompt(process.env.RETRY_PROMPT);
 
-    if (!action.includes("action:")) {
+    if (!action.toLowerCase().includes("action:")) {
       throw new Error("Chat GPT failed to return a valid action");
     }
 
@@ -120,14 +127,20 @@ export class BattleService {
   }
 
   async checkForGameFinished(page) {
-    const instantReplay = await page.evaluate(() => document.querySelector(PageElements.instantReplay));
+    const instantReplay = await page.evaluate(
+      (PageElements) => document.querySelector(PageElements.instantReplay),
+      PageElements
+    );
 
     return !!instantReplay;
   }
 
   async finishGame(page) {
     try {
-      const textarea = await page.evaluate(() => Array.from(document.querySelectorAll(PageElements.chatInput))[1]);
+      const textarea = await page.evaluate(
+        (PageElements) => Array.from(document.querySelectorAll(PageElements.chatInput))[1],
+        PageElements
+      );
 
       if (textarea) {
         await textarea.type("GG");
@@ -165,18 +178,20 @@ export class BattleService {
       ${newLog}`
     );
 
-    if (res.includes("action:switch:")) {
+    if (res.toLowerCase().includes("action:switch:")) {
       res = res.split(":")[2];
     }
 
     console.log("\n### SWITCH TO", res);
-    this.puppeteerService.clickOnXpathButton(page, res);
+    await this.puppeteerService.clickOnXpathButton(page, res);
   }
 
   async checkForSkipAnimations(page) {
-    const element = await this.puppeteerService.waitForSelectorIndefinitely(page, PageElements.skipTurn);
+    try {
+      const element = await this.puppeteerService.waitForSelectorIndefinitely(page, PageElements.skipTurn);
+      await element.click();
+    } catch {}
 
-    await element.click();
     await page.waitForTimeout(2000);
     this.checkForSkipAnimations(page);
   }

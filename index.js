@@ -24,7 +24,6 @@ if (!isTeamBuilder) {
   await startChatGpt(isUnnoficial);
 }
 
-console.log("### ASYNC TEST");
 await showdownService.startService(isTeamBuilder);
 
 async function startChatGpt(isUnnoficial) {

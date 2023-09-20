@@ -32,12 +32,6 @@ export class ShowdownService {
     page.reload();
     await page.waitForTimeout(5000);
 
-    const isLoggedIn = await page.evaluate(() => !document.querySelector('button[name="login"]'));
-
-    if (!isLoggedIn) {
-      throw new Error("Not logged in, please run 'start:teambuilder'");
-    }
-
     if (isTeamBuilder) {
       console.log("### YOU HAVE 30 SECONDS TO SET UP YOUR TEAM");
 
@@ -45,6 +39,12 @@ export class ShowdownService {
       await this.puppeteerService.saveSession(page, "sessionData.json");
       console.log("### SESSION STORED!");
       process.exit(0);
+    }
+
+    const isLoggedIn = await page.evaluate(() => !document.querySelector('button[name="login"]'));
+
+    if (!isLoggedIn) {
+      throw new Error("Not logged in, please run 'start:teambuilder'");
     }
 
     await this.waitForBattle(page);

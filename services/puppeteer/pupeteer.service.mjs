@@ -41,7 +41,12 @@ export class PuppeteerService {
   }
 
   async restoreSession(page, filePath) {
-    const sessionData = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    let sessionData = fs.readFileSync(filePath, "utf8");
+    if (!sessionData) {
+      return;
+    }
+
+    sessionData = JSON.parse(sessionData);
 
     const cookies = JSON.parse(sessionData.cookies);
     await page.setCookie(...cookies);
@@ -92,16 +97,24 @@ export class PuppeteerService {
   }
 
   async clickOnXpathButton(page, text) {
-    await page.evaluate((text) => {
-      const button = document.evaluate(
-        `//button[text()="${text}"]`,
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-      ).singleNodeValue;
+    let success = false;
 
-      button.click();
-    }, text);
+    while (!success) {
+      try {
+        await page.evaluate((text) => {
+          const button = document.evaluate(
+            `//button[text()="${text}"]`,
+            document,
+            null,
+            XPathResult.FIRST_ORDERED_NODE_TYPE,
+            null
+          ).singleNodeValue;
+
+          button.click();
+        }, text);
+
+        success = true;
+      } catch {}
+    }
   }
 }
