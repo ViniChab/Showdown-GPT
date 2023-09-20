@@ -11,9 +11,8 @@
   },
   "scripts": {
     "start": "nodemon index.js",
-    "start:teambuilder": "nodemon index.js --teambuilder",
-    "start:versus": "nodemon index.js --versus",
-    "start:versus:unnoficial": "nodemon index.js --versus --unnoficial"
+    "start:unnoficial": "nodemon index.js --unnoficial",
+    "start:teambuilder": "nodemon index.js --teambuilder"
   },
   "author": "Vinícius Chab",
   "license": "ISC",

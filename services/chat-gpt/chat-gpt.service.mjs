@@ -6,18 +6,18 @@ export class ChatGptService {
   parentMessageId;
   api;
 
-  async startService(unnofical = false) {
-    if (unnofical) {
+  async startService(isUnnoficial = false) {
+    if (isUnnoficial) {
       this.api = new ChatGPTUnofficialProxyAPI({
         accessToken: process.env.CHAT_GPT_ACCESS_TOKEN,
-        apiReverseProxyUrl: "https://ai.fakeopen.com/api/conversation",
-        model: "gpt-4",
+        apiReverseProxyUrl: process.env.PROXY_URL,
+        model: process.env.CURRENT_MODEL,
       });
     } else {
       this.api = new ChatGPTAPI({
         apiKey: process.env.OPENAI_API_KEY,
         completionParams: {
-          model: "gpt-4",
+          model: process.env.CURRENT_MODEL,
           temperature: 0.3,
           top_p: 0.3,
         },
@@ -26,7 +26,7 @@ export class ChatGptService {
 
     const prompt = process.env.START_PROMPT;
     const res = await oraPromise(this.api.sendMessage(prompt), {
-      text: "STARTING CHAT GPT SERVICE",
+      text: "STARTING CHATGPT SERVICE",
     });
     console.log("### REPONSE:", res.text);
 

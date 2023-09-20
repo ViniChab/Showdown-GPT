@@ -1,25 +1,29 @@
+import { PageElements } from "../../constants/pageElements.js";
+
 export class BattleService {
+  chatGptService;
   puppeteerService;
   currentTurn = 0;
   currentLog = "";
 
-  constructor(puppeteerService) {
+  constructor(puppeteerService, chatGptService) {
     this.puppeteerService = puppeteerService;
+    this.chatGptService = chatGptService;
   }
 
-  async startBattle(page, chatGptCoordinator) {
+  async startBattle(page) {
     await page.waitForTimeout(3000);
 
-    await this.selectLead(page, chatGptCoordinator);
-    this.startBattleLoop(page, chatGptCoordinator);
-    this.checkIfHasToSwitch(page, chatGptCoordinator);
+    await this.selectLead(page);
+    this.startBattleLoop(page);
+    this.checkIfHasToSwitch(page);
     this.checkForSkipAnimations(page);
   }
 
-  async selectLead(page, chatGptCoordinator) {
-    this.currentLog = await page.evaluate(() => document.querySelector(".inner.message-log").innerText);
+  async selectLead(page) {
+    this.currentLog = await this.getNewLog(page);
 
-    const res = await chatGptCoordinator.sendPrompt(
+    const res = await this.chatGptService.sendPrompt(
       `${process.env.LEAD_PROMPT}
       ${this.currentLog}`
     );
@@ -29,44 +33,48 @@ export class BattleService {
     return true;
   }
 
-  async startBattleLoop(page, chatGptCoordinator) {
+  // Main battle function, runs every turn
+  async startBattleLoop(page) {
     await this.waitForTurn(page, ++this.currentTurn);
-    // await page.waitForTimeout(8000); // this is to slown down the bot, since chatGPT can complain about too many requests
-    await this.selectAction(page, chatGptCoordinator);
+    await this.selectAction(page);
     await page.waitForTimeout(2000);
 
-    const gameFinished = await this.checkForGameFinished(page, chatGptCoordinator);
+    const gameFinished = await this.checkForGameFinished(page);
 
     if (gameFinished) {
       return this.finishGame(page);
     }
 
-    return this.startBattleLoop(page, chatGptCoordinator);
+    return this.startBattleLoop(page);
   }
 
   async waitForTurn(page, turn) {
-    await this.puppeteerService.waitForXPathIndefinitely(page, `//h2[text()="Turn ${turn}"]`);
+    await this.puppeteerService.waitForXPathIndefinitely(page, PageElements.currentTurn.replace("#", turn));
   }
 
-  async selectAction(page, chatGptCoordinator) {
+  async selectAction(page) {
     const newLog = await this.getNewLog(page);
-    let res = await chatGptCoordinator.sendPrompt(newLog);
-    res = res.split("\n").slice(1).join("\n");
-    await this.doAction(page, res);
+    let action = await this.chatGptService.sendPrompt(newLog);
+    action = action.split("\n").slice(1).join("\n");
+    await this.doAction(page, action.toLowerCase());
   }
 
   async getNewLog(page) {
-    const newLog = await page.evaluate(() => document.querySelector(".inner.message-log").innerText);
+    const newLog = await page.evaluate(() => document.querySelector(PageElements.battleLog).innerText);
 
     const log = newLog.replace(this.currentLog, "");
     this.currentLog = newLog;
 
-    return log;
+    return this.getCleanLog(log);
   }
 
   async doAction(page, action) {
-    const isSwitch = action.toLowerCase().includes("action:switch:");
-    const isMega = action.toLowerCase().includes("action:mega");
+    if (!action.includes("action:")) {
+      action = await this.retryAction(page);
+    }
+
+    const isSwitch = action.includes("action:switch:");
+    const isMega = action.includes("action:mega");
 
     if (isSwitch) {
       const newPokemon = action.split(":")[2];
@@ -75,11 +83,22 @@ export class BattleService {
     }
 
     if (isMega) {
-      await page.evaluate(() => document.querySelector('input[name="megaevo"]').click());
+      await page.evaluate(() => document.querySelector(PageElements.megaEvolve).click());
     }
 
-    const move = action.split(":")[1];
+    const move = isMega ? action.split(":")[2] : action.split(":")[1];
     this.puppeteerService.clickOnXpathButton(page, move);
+  }
+
+  async retryAction() {
+    console.log("\n### INVALID ACTION, RETRYING");
+    let action = await this.chatGptService.sendPrompt(process.env.RETRY_PROMPT);
+
+    if (!action.includes("action:")) {
+      throw new Error("Chat GPT failed to return a valid action");
+    }
+
+    return action;
   }
 
   async checkForPokemonSwitch(page) {
@@ -88,12 +107,10 @@ export class BattleService {
     try {
       // If none of these exist, it means the player has to switch pokemon
       await Promise.race([
-        page.waitForSelector(".movecontrols", { timeout }),
-        page.waitForSelector(".whatdo .healthy", { timeout }),
-        page.waitForSelector('button[name="undoChoice"]', { timeout }),
-        page.waitForXPath(`//em[text()="Waiting for opponent..."]`, {
-          timeout,
-        }),
+        page.waitForSelector(PageElements.moveControls, { timeout }),
+        page.waitForSelector(PageElements.pokemonHealth, { timeout }),
+        page.waitForSelector(PageElements.undoButton, { timeout }),
+        page.waitForXPath(PageElements.waitingForOpponent, { timeout }),
       ]);
 
       return false;
@@ -103,16 +120,14 @@ export class BattleService {
   }
 
   async checkForGameFinished(page) {
-    const instantReplay = await page.evaluate(() => document.querySelector('button[name="instantReplay"]'));
+    const instantReplay = await page.evaluate(() => document.querySelector(PageElements.instantReplay));
 
     return !!instantReplay;
   }
 
   async finishGame(page) {
     try {
-      const textarea = await page.evaluate(
-        () => Array.from(document.querySelectorAll(".battle-log-add .chatbox textarea"))[1]
-      );
+      const textarea = await page.evaluate(() => Array.from(document.querySelectorAll(PageElements.chatInput))[1]);
 
       if (textarea) {
         await textarea.type("GG");
@@ -120,56 +135,58 @@ export class BattleService {
       }
     } catch {}
 
-    await page.evaluate(() => {
+    // This will automatically close the battle window, but I don't want that right now
+    /*await page.evaluate(() => {
       document.querySelector(".closebutton").click();
-    });
+    });*/
   }
 
-  async checkIfHasToSwitch(page, chatGptCoordinator) {
+  async checkIfHasToSwitch(page) {
     (async () => {
       while (true) {
         try {
           const hasToSwitch = await this.checkForPokemonSwitch(page);
 
           if (hasToSwitch) {
-            console.log("### HAS TO SWITCH POKEMON");
-            await this.switchPokemon(page, chatGptCoordinator);
+            console.log("\n### HAS TO SWITCH POKEMON");
+            await this.switchPokemon(page);
           }
-        } catch (error) {
-          console.error("An error occurred:", error);
-        }
+        } catch {}
 
         await new Promise((resolve) => setTimeout(resolve, 5000));
       }
     })();
   }
 
-  async switchPokemon(page, chatGptCoordinator) {
+  async switchPokemon(page) {
     const newLog = await this.getNewLog(page);
-    const availablePokemon = await this.getAvailablePokemon(page);
-    const res = await chatGptCoordinator.sendPrompt(
+    let res = await this.chatGptService.sendPrompt(
       `${process.env.SWITCH_PROMPT}
-      ${newLog}
-      ${availablePokemon.toString()}`
+      ${newLog}`
     );
 
-    console.log("### SWITCH TO", res);
+    if (res.includes("action:switch:")) {
+      res = res.split(":")[2];
+    }
+
+    console.log("\n### SWITCH TO", res);
     this.puppeteerService.clickOnXpathButton(page, res);
   }
 
   async checkForSkipAnimations(page) {
-    const element = await this.puppeteerService.waitForSelectorIndefinitely(page, 'button[name="goToEnd"]');
+    const element = await this.puppeteerService.waitForSelectorIndefinitely(page, PageElements.skipTurn);
 
     await element.click();
     await page.waitForTimeout(2000);
     this.checkForSkipAnimations(page);
   }
 
-  async getAvailablePokemon(page) {
-    const availablePokemon = await page.evaluate(() => {
-      return Array.from(document.querySelectorAll(".switchmenu button:not(.disabled)")).map((el) => el.innerText);
-    });
+  getCleanLog(text) {
+    text = text.replace(/^\s*[\r\n]/gm, "");
+    text = text.replace(/!/g, "");
+    text = text.replace(/it's/gi, "its");
+    text = text.toLowerCase();
 
-    return availablePokemon.map((button) => button.innerText);
+    return text;
   }
 }

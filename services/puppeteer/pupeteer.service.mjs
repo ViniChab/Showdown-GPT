@@ -1,14 +1,16 @@
 import fs from "fs";
 
 export class PuppeteerService {
-  waitForBrowser(browserHandler) {
-    if (!browserHandler) {
-      throw new Error("browserHandler is not defined");
-    }
+  browserHandler;
 
-    return new Promise((resolve, reject) => {
+  constructor(browserHandler) {
+    this.browserHandler = browserHandler;
+  }
+
+  waitForBrowser() {
+    return new Promise((resolve) => {
       const browserCheck = setInterval(() => {
-        if (browserHandler.browser !== false) {
+        if (this.browserHandler.browser !== false) {
           clearInterval(browserCheck);
           resolve(true);
         }

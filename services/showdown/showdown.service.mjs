@@ -1,17 +1,18 @@
 import { BattleService } from "../battle/battle.service.mjs";
-import { PuppeteerService } from "../puppeteer/pupeteer.service.mjs";
 import puppeteer from "puppeteer";
 
 export class ShowdownService {
   puppeteerService;
   battleService;
+  chatGptService;
 
-  constructor() {
-    this.puppeteerService = new PuppeteerService();
-    this.battleService = new BattleService(this.puppeteerService);
+  constructor(chatGptService, puppeteerService) {
+    this.chatGptService = chatGptService;
+    this.puppeteerService = puppeteerService;
+    this.battleService = new BattleService(puppeteerService, chatGptService);
   }
 
-  async startService(isTeamBuilder, isVersus, chatGptCoordinator) {
+  async startService(isTeamBuilder) {
     console.log("### STARTING SHOWDOWN SERVICE");
 
     let browser = await puppeteer.launch({
@@ -25,11 +26,17 @@ export class ShowdownService {
     });
 
     const page = await browser.newPage();
-    page.goto("https://play.pokemonshowdown.com/");
+    page.goto(process.env.SHOWDONW_URL);
     await page.waitForTimeout(5000);
     await this.puppeteerService.restoreSession(page, "sessionData.json");
     page.reload();
     await page.waitForTimeout(5000);
+
+    const isLoggedIn = await page.evaluate(() => !document.querySelector('button[name="login"]'));
+
+    if (!isLoggedIn) {
+      throw new Error("Not logged in, please run 'start:teambuilder'");
+    }
 
     if (isTeamBuilder) {
       console.log("### YOU HAVE 30 SECONDS TO SET UP YOUR TEAM");
@@ -40,19 +47,9 @@ export class ShowdownService {
       process.exit(0);
     }
 
-    if (isVersus) {
-      await this.waitForBattle(page);
-      console.log("### BATTLE STARTED");
-      this.battleService.startBattle(page, chatGptCoordinator);
-    }
-
-    const isLoggedIn = await page.evaluate(() => !document.querySelector('button[name="login"]'));
-
-    if (!isLoggedIn) {
-      throw new Error("Not logged in, please run 'start:teambuilder'");
-    }
-
-    return browser;
+    await this.waitForBattle(page);
+    console.log("### BATTLE STARTED");
+    this.battleService.startBattle(page);
   }
 
   async waitForBattle(page) {
