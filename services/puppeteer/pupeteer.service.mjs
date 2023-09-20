@@ -88,4 +88,18 @@ export class PuppeteerService {
 
     return elementHandle;
   }
+
+  async clickOnXpathButton(page, text) {
+    await page.evaluate((text) => {
+      const button = document.evaluate(
+        `//button[text()="${text}"]`,
+        document,
+        null,
+        XPathResult.FIRST_ORDERED_NODE_TYPE,
+        null
+      ).singleNodeValue;
+
+      button.click();
+    }, text);
+  }
 }

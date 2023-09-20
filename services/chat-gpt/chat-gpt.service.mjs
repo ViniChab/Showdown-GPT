@@ -1,10 +1,9 @@
 import { ChatGPTUnofficialProxyAPI, ChatGPTAPI } from "chatgpt";
 import { oraPromise } from "ora";
 
-export class ChatGptCoordinatorService {
+export class ChatGptService {
   currentConversationId;
   parentMessageId;
-  puppeteerService;
   api;
 
   async startService(unnofical = false) {
@@ -19,8 +18,8 @@ export class ChatGptCoordinatorService {
         apiKey: process.env.OPENAI_API_KEY,
         completionParams: {
           model: "gpt-4",
-          temperature: 0.5,
-          top_p: 0.8,
+          temperature: 0.3,
+          top_p: 0.3,
         },
       });
     }
@@ -48,7 +47,7 @@ export class ChatGptCoordinatorService {
       }
     );
     this.parentMessageId = res.id;
-    console.log("### REPONSE:\n", res.text.trim());
+    console.log("\n### REPONSE:\n", res.text.trim());
 
     return res.text;
   }

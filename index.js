@@ -4,8 +4,8 @@ dotenv.config();
 
 import { PuppeteerService } from "./services/puppeteer/pupeteer.service.mjs";
 import { BrowserHandler } from "./services/browser-handler/browser-handler.service.mjs";
-import { ChatGptCoordinatorService } from "./services/chat-gpt-coordinator/chat-gpt-coordinator.service.mjs";
-import { ShowdownCoordinatorService } from "./services/showdown-coordinator/showdown-coordinator.service.mjs";
+import { ChatGptService } from "./services/chat-gpt/chat-gpt.service.mjs";
+import { ShowdownService } from "./services/showdown/showdown.service.mjs";
 
 const port = process?.env?.PORT || 5100;
 const app = express();
@@ -20,7 +20,7 @@ async function main() {
   const isTeamBuilder = args.includes("--teambuilder");
   const isVersus = args.includes("--versus");
   const isUnnoficial = args.includes("--unnoficial");
-  const chatGptCoordinator = new ChatGptCoordinatorService();
+  const chatGptCoordinator = new ChatGptService();
 
   console.log("### ARGS", args);
 
@@ -31,11 +31,7 @@ async function main() {
     await startChatGpt(chatGptCoordinator, isUnnoficial);
   }
 
-  await new ShowdownCoordinatorService().startService(
-    isTeamBuilder,
-    isVersus,
-    chatGptCoordinator
-  );
+  await new ShowdownService().startService(isTeamBuilder, isVersus, chatGptCoordinator);
 }
 
 async function startChatGpt(chatGptCoordinator, isUnnoficial) {

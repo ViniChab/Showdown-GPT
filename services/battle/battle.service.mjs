@@ -17,39 +17,25 @@ export class BattleService {
   }
 
   async selectLead(page, chatGptCoordinator) {
-    this.currentLog = await page.evaluate(() => {
-      return document.querySelector(".inner.message-log").innerText;
-    });
+    this.currentLog = await page.evaluate(() => document.querySelector(".inner.message-log").innerText);
 
     const res = await chatGptCoordinator.sendPrompt(
       `${process.env.LEAD_PROMPT}
       ${this.currentLog}`
     );
 
-    await page.evaluate((res) => {
-      const button = document.evaluate(
-        `//button[text()="${res}"]`,
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-      ).singleNodeValue;
-
-      button.click();
-    }, res);
+    this.puppeteerService.clickOnXpathButton(page, res);
 
     return true;
   }
 
   async startBattleLoop(page, chatGptCoordinator) {
     await this.waitForTurn(page, ++this.currentTurn);
+    // await page.waitForTimeout(8000); // this is to slown down the bot, since chatGPT can complain about too many requests
     await this.selectAction(page, chatGptCoordinator);
     await page.waitForTimeout(2000);
 
-    const gameFinished = await this.checkForGameFinished(
-      page,
-      chatGptCoordinator
-    );
+    const gameFinished = await this.checkForGameFinished(page, chatGptCoordinator);
 
     if (gameFinished) {
       return this.finishGame(page);
@@ -59,10 +45,7 @@ export class BattleService {
   }
 
   async waitForTurn(page, turn) {
-    await this.puppeteerService.waitForXPathIndefinitely(
-      page,
-      `//h2[text()="Turn ${turn}"]`
-    );
+    await this.puppeteerService.waitForXPathIndefinitely(page, `//h2[text()="Turn ${turn}"]`);
   }
 
   async selectAction(page, chatGptCoordinator) {
@@ -73,9 +56,7 @@ export class BattleService {
   }
 
   async getNewLog(page) {
-    const newLog = await page.evaluate(() => {
-      return document.querySelector(".inner.message-log").innerText;
-    });
+    const newLog = await page.evaluate(() => document.querySelector(".inner.message-log").innerText);
 
     const log = newLog.replace(this.currentLog, "");
     this.currentLog = newLog;
@@ -84,43 +65,28 @@ export class BattleService {
   }
 
   async doAction(page, action) {
-    const isSwitch = action.includes("action:switch:");
+    const isSwitch = action.toLowerCase().includes("action:switch:");
+    const isMega = action.toLowerCase().includes("action:mega");
 
     if (isSwitch) {
       const newPokemon = action.split(":")[2];
-
-      await page.evaluate((newPokemon) => {
-        const button = document.evaluate(
-          `//button[text()="${newPokemon}"]`,
-          document,
-          null,
-          XPathResult.FIRST_ORDERED_NODE_TYPE,
-          null
-        ).singleNodeValue;
-
-        button.click();
-      }, newPokemon);
-    } else {
-      const move = action.split(":")[1];
-
-      await page.evaluate((move) => {
-        const button = document.evaluate(
-          `//button[text()="${move}"]`,
-          document,
-          null,
-          XPathResult.FIRST_ORDERED_NODE_TYPE,
-          null
-        ).singleNodeValue;
-
-        button.click();
-      }, move);
+      this.puppeteerService.clickOnXpathButton(page, newPokemon);
+      return;
     }
+
+    if (isMega) {
+      await page.evaluate(() => document.querySelector('input[name="megaevo"]').click());
+    }
+
+    const move = action.split(":")[1];
+    this.puppeteerService.clickOnXpathButton(page, move);
   }
 
   async checkForPokemonSwitch(page) {
     const timeout = 5000;
 
     try {
+      // If none of these exist, it means the player has to switch pokemon
       await Promise.race([
         page.waitForSelector(".movecontrols", { timeout }),
         page.waitForSelector(".whatdo .healthy", { timeout }),
@@ -137,20 +103,16 @@ export class BattleService {
   }
 
   async checkForGameFinished(page) {
-    const instantReplay = await page.evaluate(() => {
-      return document.querySelector('button[name="instantReplay"]');
-    });
+    const instantReplay = await page.evaluate(() => document.querySelector('button[name="instantReplay"]'));
 
     return !!instantReplay;
   }
 
   async finishGame(page) {
     try {
-      const textarea = await page.evaluate(() => {
-        return Array.from(
-          document.querySelectorAll(".battle-log-add .chatbox textarea")
-        )[1];
-      });
+      const textarea = await page.evaluate(
+        () => Array.from(document.querySelectorAll(".battle-log-add .chatbox textarea"))[1]
+      );
 
       if (textarea) {
         await textarea.type("GG");
@@ -184,32 +146,30 @@ export class BattleService {
 
   async switchPokemon(page, chatGptCoordinator) {
     const newLog = await this.getNewLog(page);
-    let res = await chatGptCoordinator.sendPrompt(
-      `${process.env.SWITCH_PROMPT} ${newLog}`
+    const availablePokemon = await this.getAvailablePokemon(page);
+    const res = await chatGptCoordinator.sendPrompt(
+      `${process.env.SWITCH_PROMPT}
+      ${newLog}
+      ${availablePokemon.toString()}`
     );
 
     console.log("### SWITCH TO", res);
-    await page.evaluate((res) => {
-      const button = document.evaluate(
-        `//button[text()="${res}"]`,
-        document,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-      ).singleNodeValue;
-
-      button.click();
-    }, res);
+    this.puppeteerService.clickOnXpathButton(page, res);
   }
 
   async checkForSkipAnimations(page) {
-    const element = await this.puppeteerService.waitForSelectorIndefinitely(
-      page,
-      'button[name="goToEnd"]'
-    );
+    const element = await this.puppeteerService.waitForSelectorIndefinitely(page, 'button[name="goToEnd"]');
 
     await element.click();
     await page.waitForTimeout(2000);
     this.checkForSkipAnimations(page);
+  }
+
+  async getAvailablePokemon(page) {
+    const availablePokemon = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll(".switchmenu button:not(.disabled)")).map((el) => el.innerText);
+    });
+
+    return availablePokemon.map((button) => button.innerText);
   }
 }

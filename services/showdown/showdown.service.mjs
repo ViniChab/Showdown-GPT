@@ -2,7 +2,7 @@ import { BattleService } from "../battle/battle.service.mjs";
 import { PuppeteerService } from "../puppeteer/pupeteer.service.mjs";
 import puppeteer from "puppeteer";
 
-export class ShowdownCoordinatorService {
+export class ShowdownService {
   puppeteerService;
   battleService;
 
@@ -16,11 +16,7 @@ export class ShowdownCoordinatorService {
 
     let browser = await puppeteer.launch({
       headless: false,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--window-size=1366,768",
-      ],
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--window-size=1366,768"],
       ignoreHTTPSErrors: true,
       defaultViewport: {
         width: 1366,
@@ -50,9 +46,7 @@ export class ShowdownCoordinatorService {
       this.battleService.startBattle(page, chatGptCoordinator);
     }
 
-    const isLoggedIn = await page.evaluate(
-      () => !document.querySelector('button[name="login"]')
-    );
+    const isLoggedIn = await page.evaluate(() => !document.querySelector('button[name="login"]'));
 
     if (!isLoggedIn) {
       throw new Error("Not logged in, please run 'start:teambuilder'");
@@ -63,10 +57,7 @@ export class ShowdownCoordinatorService {
 
   async waitForBattle(page) {
     console.log("### WAITING FOR BATTLE");
-    await this.puppeteerService.waitForSelectorIndefinitely(
-      page,
-      ".innerbattle"
-    );
+    await this.puppeteerService.waitForSelectorIndefinitely(page, ".innerbattle");
     return true;
   }
 }
