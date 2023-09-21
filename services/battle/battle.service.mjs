@@ -5,6 +5,7 @@ export class BattleService {
   puppeteerService;
   currentTurn = 0;
   currentLog = "";
+  isBattleFinished = false;
 
   constructor(puppeteerService, chatGptService) {
     this.puppeteerService = puppeteerService;
@@ -12,6 +13,7 @@ export class BattleService {
   }
 
   async startBattle(page) {
+    this.isBattleFinished = false;
     await page.waitForTimeout(3000);
 
     await this.selectLead(page);
@@ -33,8 +35,6 @@ export class BattleService {
     }
 
     this.puppeteerService.clickOnXpathButton(page, res);
-
-    return true;
   }
 
   // Main battle function, runs every turn
@@ -43,9 +43,9 @@ export class BattleService {
     await this.selectAction(page);
     await page.waitForTimeout(2000);
 
-    const gameFinished = await this.checkForGameFinished(page);
+    this.isBattleFinished = await this.checkForGameFinished(page);
 
-    if (gameFinished) {
+    if (this.isBattleFinished) {
       return this.finishGame(page);
     }
 
@@ -149,8 +149,8 @@ export class BattleService {
     } catch {}
 
     try {
-      const saveReplay = await this.puppeteerService.waitForSelectorIndefinitely(page, PageElements.saveReplay);
-      await saveReplay.click();
+      await this.puppeteerService.waitForSelectorIndefinitely(page, PageElements.saveReplay);
+      await page.evaluate((PageElements) => document.querySelector(PageElements.saveReplay).click(), PageElements);
 
       await page.waitForTimeout(10000);
       const replayLink = await page.evaluate(
@@ -159,26 +159,33 @@ export class BattleService {
       );
 
       await this.puppeteerService.saveReplay(replayLink);
+
+      const popupClose = await this.puppeteerService.waitForSelectorIndefinitely(page, PageElements.popupClose);
+      await popupClose.click();
     } catch {}
 
     await page.evaluate((PageElements) => document.querySelector(PageElements.closeBattle).click(), PageElements);
+    console.log("\n### GAME FINISHED! PROGRAM WILL EXIT IN 10 SECONDS");
+
+    await page.waitForTimeout(10000);
+    process.exit(0);
   }
 
   async checkIfHasToSwitch(page) {
-    (async () => {
-      while (true) {
-        try {
-          const hasToSwitch = await this.checkForPokemonSwitch(page);
+    while (!this.isBattleFinished) {
+      try {
+        const hasToSwitch = await this.checkForPokemonSwitch(page);
 
-          if (hasToSwitch) {
-            console.log("\n### HAS TO SWITCH POKEMON");
-            await this.switchPokemon(page);
-          }
-        } catch {}
-
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        if (hasToSwitch) {
+          console.log("\n### HAS TO SWITCH POKEMON");
+          await this.switchPokemon(page);
+        }
+      } catch {
+        await this.switchPokemon(page);
       }
-    })();
+
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
   }
 
   async switchPokemon(page) {
@@ -198,9 +205,12 @@ export class BattleService {
 
   async checkForSkipAnimations(page) {
     try {
-      const element = await this.puppeteerService.waitForSelectorIndefinitely(page, PageElements.skipTurn);
-      await element.click();
-    } catch {}
+      await this.puppeteerService.waitForSelectorIndefinitely(page, PageElements.skipTurn);
+      await page.evaluate((PageElements) => document.querySelector(PageElements.skipTurn).click(), PageElements);
+    } catch {
+      await page.waitForTimeout(500);
+      this.checkForSkipAnimations(page);
+    }
 
     await page.waitForTimeout(2000);
     this.checkForSkipAnimations(page);

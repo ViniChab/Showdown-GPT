@@ -12,4 +12,5 @@ export const PageElements = {
   saveReplay: `button[name="saveReplay"]`,
   replayLink: `.replay-link`,
   closeBattle: `.closebutton`,
+  popupClose: `p > button[name="close"]`,
 };

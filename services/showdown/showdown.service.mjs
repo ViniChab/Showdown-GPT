@@ -26,10 +26,11 @@ export class ShowdownService {
     });
 
     const page = await browser.newPage();
-    page.goto(process.env.SHOWDONW_URL);
+    page.goto(process.env.SHOWDONW_URL, { timeout: 0 });
     await page.waitForTimeout(5000);
     await this.puppeteerService.restoreSession(page, "sessionData.json");
-    page.reload();
+    page.reload({ timeout: 0 });
+    console.log("### SESSION LOADED");
     await page.waitForTimeout(5000);
 
     if (isTeamBuilder) {
