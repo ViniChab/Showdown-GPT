@@ -161,9 +161,7 @@ export class BattleService {
       await this.puppeteerService.saveReplay(replayLink);
     } catch {}
 
-    await page.evaluate(() => {
-      document.querySelector(".closebutton").click();
-    });
+    await page.evaluate((PageElements) => document.querySelector(PageElements.closeBattle).click(), PageElements);
   }
 
   async checkIfHasToSwitch(page) {

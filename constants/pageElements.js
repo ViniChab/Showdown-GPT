@@ -11,4 +11,5 @@ export const PageElements = {
   skipTurn: `button[name="goToEnd"]`,
   saveReplay: `button[name="saveReplay"]`,
   replayLink: `.replay-link`,
+  closeBattle: `.closebutton`,
 };
