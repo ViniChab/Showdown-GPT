@@ -117,4 +117,8 @@ export class PuppeteerService {
       } catch {}
     }
   }
+
+  async saveReplay(replayLink) {
+    fs.appendFileSync("replays.txt", `${replayLink}\n`);
+  }
 }

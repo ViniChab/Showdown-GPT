@@ -148,10 +148,22 @@ export class BattleService {
       }
     } catch {}
 
-    // This will automatically close the battle window, but I don't want that right now
-    /*await page.evaluate(() => {
+    try {
+      const saveReplay = await this.puppeteerService.waitForSelectorIndefinitely(page, PageElements.saveReplay);
+      await saveReplay.click();
+
+      await page.waitForTimeout(10000);
+      const replayLink = await page.evaluate(
+        (PageElements) => document.querySelector(PageElements.replayLink).innerHTML,
+        PageElements
+      );
+
+      await this.puppeteerService.saveReplay(replayLink);
+    } catch {}
+
+    await page.evaluate(() => {
       document.querySelector(".closebutton").click();
-    });*/
+    });
   }
 
   async checkIfHasToSwitch(page) {

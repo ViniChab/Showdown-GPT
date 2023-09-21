@@ -9,4 +9,6 @@ export const PageElements = {
   instantReplay: `button[name="instantReplay"]`,
   chatInput: `.battle-log-add .chatbox textarea`,
   skipTurn: `button[name="goToEnd"]`,
+  saveReplay: `button[name="saveReplay"]`,
+  replayLink: `.replay-link`,
 };
