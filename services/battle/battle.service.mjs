@@ -59,7 +59,6 @@ export class BattleService {
   async selectAction(page) {
     const newLog = await this.getNewLog(page);
     let action = await this.chatGptService.sendPrompt(newLog);
-    action = action.split("\n").slice(1).join("\n");
     await this.doAction(page, action);
   }
 
@@ -82,6 +81,8 @@ export class BattleService {
 
     const isSwitch = action.toLowerCase().includes("action:switch:");
     const isMega = action.toLowerCase().includes("action:mega");
+
+    await page.waitForTimeout(1000);
 
     if (isSwitch) {
       const newPokemon = action.split(":")[2];

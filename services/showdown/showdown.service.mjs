@@ -15,22 +15,16 @@ export class ShowdownService {
   async startService(isTeamBuilder) {
     console.log("### STARTING SHOWDOWN SERVICE");
 
-    let browser = await puppeteer.launch({
-      headless: false,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--window-size=1366,768"],
-      ignoreHTTPSErrors: true,
-      defaultViewport: {
-        width: 1366,
-        height: 768,
-      },
-    });
-
+    const browser = await this.openBrowser();
     const page = await browser.newPage();
     page.goto(process.env.SHOWDONW_URL, { timeout: 0 });
-    await page.waitForTimeout(5000);
+
+    await page.waitForTimeout(5000); // Timeout is better than waiting for page load, because sometimes showdown simply won't finish loading
+
     await this.puppeteerService.restoreSession(page, "sessionData.json");
     page.reload({ timeout: 0 });
     console.log("### SESSION LOADED");
+
     await page.waitForTimeout(5000);
 
     if (isTeamBuilder) {
@@ -38,6 +32,7 @@ export class ShowdownService {
 
       await page.waitForTimeout(30000);
       await this.puppeteerService.saveSession(page, "sessionData.json");
+
       console.log("### SESSION STORED!");
       process.exit(0);
     }
@@ -51,6 +46,18 @@ export class ShowdownService {
     await this.waitForBattle(page);
     console.log("### BATTLE STARTED");
     this.battleService.startBattle(page);
+  }
+
+  async openBrowser() {
+    const width = +process.env.BROWSER_WIDTH;
+    const height = +process.env.BROWSER_HEIGHT;
+
+    return await puppeteer.launch({
+      headless: false,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", `--window-size=${width},${height}`],
+      ignoreHTTPSErrors: true,
+      defaultViewport: { width, height },
+    });
   }
 
   async waitForBattle(page) {

@@ -1,23 +1,6 @@
 import fs from "fs";
 
 export class PuppeteerService {
-  browserHandler;
-
-  constructor(browserHandler) {
-    this.browserHandler = browserHandler;
-  }
-
-  waitForBrowser() {
-    return new Promise((resolve) => {
-      const browserCheck = setInterval(() => {
-        if (this.browserHandler.browser !== false) {
-          clearInterval(browserCheck);
-          resolve(true);
-        }
-      }, 200);
-    });
-  }
-
   async saveSession(page, filePath) {
     const cookies = await page.cookies();
     const cookiesString = JSON.stringify(cookies);

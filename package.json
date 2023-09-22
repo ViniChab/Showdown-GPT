@@ -3,16 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "nodemonConfig": {
-    "ext": "js",
-    "ignore": [
-      "*.json"
-    ]
-  },
   "scripts": {
-    "start": "nodemon index.js",
-    "start:unnoficial": "nodemon index.js --unnoficial",
-    "start:teambuilder": "nodemon index.js --teambuilder"
+    "start": "node index.js",
+    "start:unnoficial": "node index.js --unnoficial",
+    "start:teambuilder": "node index.js --teambuilder"
   },
   "author": "Vinícius Chab",
   "license": "ISC",

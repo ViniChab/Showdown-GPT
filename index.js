@@ -1,14 +1,13 @@
+import puppeteer from "puppeteer";
 import dotenv from "dotenv";
 dotenv.config();
 
 import { PuppeteerService } from "./services/puppeteer/pupeteer.service.mjs";
-import { BrowserHandler } from "./services/browser-handler/browser-handler.service.mjs";
 import { ChatGptService } from "./services/chat-gpt/chat-gpt.service.mjs";
 import { ShowdownService } from "./services/showdown/showdown.service.mjs";
 
 const chatGptService = new ChatGptService();
-const browserHandler = new BrowserHandler();
-const puppeteerService = new PuppeteerService(browserHandler);
+const puppeteerService = new PuppeteerService();
 const showdownService = new ShowdownService(chatGptService, puppeteerService);
 
 const args = process.argv.slice(2);
@@ -17,8 +16,7 @@ const isUnnoficial = args.includes("--unnoficial");
 
 console.log("### ARGS", args);
 console.log("### STARTING PUPPETEER");
-
-await puppeteerService.waitForBrowser();
+await puppeteer.launch();
 
 if (!isTeamBuilder) {
   await startChatGpt(isUnnoficial);
