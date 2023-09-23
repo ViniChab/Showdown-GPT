@@ -14,5 +14,5 @@ export const PageElements = {
   closeBattle: `.closebutton`,
   popupClose: `p > button[name="close"]`,
   availableMoves: `.movemenu button:not(:disabled)`,
-  availablePokemon: `.switchmenu  button:not(:disabled)`,
+  availablePokemon: `.switchmenu button:not(.disabled)`,
 };

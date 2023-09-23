@@ -196,11 +196,13 @@ export class BattleService {
   async switchPokemon(page) {
     const newLog = await this.getNewLog(page);
     const availablePokemon = await this.getAvailablePokemon(page);
-    console.log("\n### HAS TO SWITCH, AVAILABLE POKEMON ARE: ", availablePokemon);
+    console.log("\n### HAS TO SWITCH, AVAILABLE POKEMON ARE:", availablePokemon);
 
     let res = await this.chatGptService.sendPrompt(
       `${process.env.SWITCH_PROMPT}
-      ${newLog}``available pokemon: ${availablePokemon}`
+      ${newLog}
+
+      available pokemon: ${availablePokemon}`
     );
 
     if (res.toLowerCase().includes("action:switch:")) {
@@ -231,7 +233,10 @@ export class BattleService {
       PageElements
     );
 
-    return moves.map((move) => move.split("\n")[0]).toString();
+    return moves
+      .map((move) => move.split("\n")[0])
+      .toString()
+      .replace(/,/g, ", ");
   }
 
   async getAvailablePokemon(page) {
@@ -241,7 +246,7 @@ export class BattleService {
       PageElements
     );
 
-    return pokemon.toString();
+    return pokemon.toString().replace(/,/g, ", ");
   }
 
   getCleanLog(text) {
