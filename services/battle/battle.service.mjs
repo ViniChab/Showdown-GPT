@@ -58,7 +58,12 @@ export class BattleService {
 
   async selectAction(page) {
     const newLog = await this.getNewLog(page);
-    let action = await this.chatGptService.sendPrompt(newLog);
+    const availableMoves = await this.getAvailableMoves(page);
+    const action = await this.chatGptService.sendPrompt(
+      `${newLog}
+
+      available moves: ${availableMoves}`
+    );
     await this.doAction(page, action);
   }
 
@@ -178,7 +183,6 @@ export class BattleService {
         const hasToSwitch = await this.checkForPokemonSwitch(page);
 
         if (hasToSwitch) {
-          console.log("\n### HAS TO SWITCH POKEMON");
           await this.switchPokemon(page);
         }
       } catch {
@@ -191,9 +195,12 @@ export class BattleService {
 
   async switchPokemon(page) {
     const newLog = await this.getNewLog(page);
+    const availablePokemon = await this.getAvailablePokemon(page);
+    console.log("\n### HAS TO SWITCH, AVAILABLE POKEMON ARE: ", availablePokemon);
+
     let res = await this.chatGptService.sendPrompt(
       `${process.env.SWITCH_PROMPT}
-      ${newLog}`
+      ${newLog}``available pokemon: ${availablePokemon}`
     );
 
     if (res.toLowerCase().includes("action:switch:")) {
@@ -215,6 +222,26 @@ export class BattleService {
 
     await page.waitForTimeout(2000);
     this.checkForSkipAnimations(page);
+  }
+
+  async getAvailableMoves(page) {
+    const moves = await page.evaluate(
+      (PageElements) =>
+        Array.from(document.querySelectorAll(PageElements.availableMoves)).map((button) => button?.innerText),
+      PageElements
+    );
+
+    return moves.map((move) => move.split("\n")[0]).toString();
+  }
+
+  async getAvailablePokemon(page) {
+    const pokemon = await page.evaluate(
+      (PageElements) =>
+        Array.from(document.querySelectorAll(PageElements.availablePokemon)).map((button) => button?.innerText),
+      PageElements
+    );
+
+    return pokemon.toString();
   }
 
   getCleanLog(text) {

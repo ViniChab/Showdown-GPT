@@ -13,4 +13,6 @@ export const PageElements = {
   replayLink: `.replay-link`,
   closeBattle: `.closebutton`,
   popupClose: `p > button[name="close"]`,
+  availableMoves: `.movemenu button:not(:disabled)`,
+  availablePokemon: `.switchmenu  button:not(:disabled)`,
 };

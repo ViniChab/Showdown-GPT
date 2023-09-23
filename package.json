@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "start:unnoficial": "node index.js --unnoficial",
-    "start:teambuilder": "node index.js --teambuilder"
+    "start": "nodemon index.js",
+    "start:unnoficial": "nodemon index.js --unnoficial",
+    "start:teambuilder": "nodemon index.js --teambuilder"
   },
   "author": "Vinícius Chab",
   "license": "ISC",
@@ -15,6 +15,7 @@
     "chatgpt": "^5.2.5",
     "dotenv": "^16.3.1",
     "eslint": "^8.49.0",
+    "nodemon": "^3.0.1",
     "ora": "^7.0.1",
     "puppeteer": "^13.1.1"
   }

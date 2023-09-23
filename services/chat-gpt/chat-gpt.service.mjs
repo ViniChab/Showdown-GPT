@@ -37,15 +37,13 @@ export class ChatGptService {
   }
 
   async sendPrompt(prompt) {
-    console.log("\n");
-
     const res = await oraPromise(
       this.api.sendMessage(prompt, {
         conversationId: this.currentConversationId,
         parentMessageId: this.parentMessageId,
       }),
       {
-        text: "Waiting for ChatGPT",
+        text: "\nWaiting for ChatGPT",
       }
     );
     this.parentMessageId = res.id;
