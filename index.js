@@ -19,7 +19,7 @@ console.log("### STARTING PUPPETEER");
 await puppeteer.launch();
 
 if (!isTeamBuilder) {
-  // await startChatGpt(isUnnoficial);
+  await startChatGpt(isUnnoficial);
 }
 
 await showdownService.startService(isTeamBuilder);
