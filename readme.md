@@ -48,6 +48,7 @@ I'd say ChatGPT plays decently, but it still lost most of the battles it fought.
 Any model lower than 4 is completely unable to follow the instructions correctly, and will fail pretty quickly, responding something it shouldn't and crashing the program.  
   
 Even model 4 will sometimes have trouble "remembering" all the instructions I gave it, that will happen when a battle goes on for too long. If the model "derails", the battle is over.  
+  
 Also, model 4 currently has a hard limit of 50 messages every three hours, meaning that you can really go for one battle at a time, or two really short ones.
   
 Sometimes it will insist on doing inefficient actions, such as using earthquake on pokémon that are immune to it, or replacing a pokémon only to immediately replace it again.  
@@ -59,11 +60,13 @@ Generally, I'd say ChatGPT passes the test. Maybe one day a better model will be
 ## Why not use the official API?
 
 Two reasons - first, it's crazy expensive. I put $5 in my OpenAI account, and it burned through it in just a few battles. Absolutely not worth it.  
+  
 Secondly, even the official API has rate limits, and for some reason, they are even worse than the "normal conversation" ones. A normal conversation with GPT-4 has a 50-message hard limit, but the official API has a "messages/time" rate limit, and this program is able to reach it before a single battle is over. Overall, the official API just won't cut.  
 
 ## Prompts
 
 While ChatGPT is the brain of the operation, it will need a lot of information to play decently. I left the prompts I used in the `example-prompts.md` file.  
+  
 Feel free to play around with the prompts, but know that making the excessively large will make ChatGPT "derail" much faster. If we had a model even as smart as 4, but with a much larger "memory", a bigger and better prompt would for sure improve its gameplay. The prompts I used are the result of many modifications to strike a good balance between being short, and with enough information.  
   
 I'd recommend using the official [OpenAI Tokenizer](https://platform.openai.com/tokenizer) to build your prompts.  
