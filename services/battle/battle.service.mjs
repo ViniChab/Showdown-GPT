@@ -23,11 +23,14 @@ export class BattleService {
   }
 
   async selectLead(page) {
-    this.currentLog = await this.getNewLog(page);
+    let newLog = await this.getNewLog(page);
+
+    // Removing excess of text on battle start
+    newLog = newLog.split("\n").slice(13).join("\n");
 
     let res = await this.chatGptService.sendPrompt(
       `${process.env.LEAD_PROMPT}
-      ${this.currentLog}`
+      ${newLog}`
     );
 
     if (res.toLowerCase().includes("action:switch:")) {
@@ -41,7 +44,7 @@ export class BattleService {
   async startBattleLoop(page) {
     await this.waitForTurn(page, ++this.currentTurn);
     await this.selectAction(page);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
 
     this.isBattleFinished = await this.checkForGameFinished(page);
 
@@ -195,14 +198,11 @@ export class BattleService {
 
   async switchPokemon(page) {
     const newLog = await this.getNewLog(page);
-    const availablePokemon = await this.getAvailablePokemon(page);
-    console.log("\n### HAS TO SWITCH, AVAILABLE POKEMON ARE:", availablePokemon);
+    console.log("\n### HAS TO SWITCH");
 
     let res = await this.chatGptService.sendPrompt(
       `${process.env.SWITCH_PROMPT}
-      ${newLog}
-
-      available pokemon: ${availablePokemon}`
+      ${newLog}`
     );
 
     if (res.toLowerCase().includes("action:switch:")) {
@@ -237,16 +237,6 @@ export class BattleService {
       .map((move) => move.split("\n")[0])
       .toString()
       .replace(/,/g, ", ");
-  }
-
-  async getAvailablePokemon(page) {
-    const pokemon = await page.evaluate(
-      (PageElements) =>
-        Array.from(document.querySelectorAll(PageElements.availablePokemon)).map((button) => button?.innerText),
-      PageElements
-    );
-
-    return pokemon.toString().replace(/,/g, ", ");
   }
 
   getCleanLog(text) {

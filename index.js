@@ -12,20 +12,20 @@ const showdownService = new ShowdownService(chatGptService, puppeteerService);
 
 const args = process.argv.slice(2);
 const isTeamBuilder = args.includes("--teambuilder");
-const isUnnoficial = args.includes("--unnoficial");
+const isUnnofficial = args.includes("--unofficial");
 
 console.log("### ARGS", args);
 console.log("### STARTING PUPPETEER");
 await puppeteer.launch();
 
 if (!isTeamBuilder) {
-  await startChatGpt(isUnnoficial);
+  await startChatGpt(isUnnofficial);
 }
 
 await showdownService.startService(isTeamBuilder);
 
-async function startChatGpt(isUnnoficial) {
-  const hasStarted = await chatGptService.startService(isUnnoficial);
+async function startChatGpt(isUnnofficial) {
+  const hasStarted = await chatGptService.startService(isUnnofficial);
 
   if (!hasStarted) {
     throw new Error("Chat GPT service failed to start");

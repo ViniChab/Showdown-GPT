@@ -6,8 +6,8 @@ export class ChatGptService {
   parentMessageId;
   api;
 
-  async startService(isUnnoficial = false) {
-    if (isUnnoficial) {
+  async startService(isUnnofficial = false) {
+    if (isUnnofficial) {
       this.api = new ChatGPTUnofficialProxyAPI({
         accessToken: process.env.CHAT_GPT_ACCESS_TOKEN,
         apiReverseProxyUrl: process.env.PROXY_URL,

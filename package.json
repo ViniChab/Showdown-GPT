@@ -5,11 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "start:unnoficial": "nodemon index.js --unnoficial",
+    "start:unofficial": "nodemon index.js --unofficial",
     "start:teambuilder": "nodemon index.js --teambuilder"
   },
   "author": "Vinícius Chab",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "chatgpt": "^5.2.5",
